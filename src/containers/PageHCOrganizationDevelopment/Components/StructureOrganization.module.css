@@ -1,0 +1,94 @@
+.baseCustomNodes {
+  padding: 0.4rem;
+  width: 13rem;
+  /* width: auto; */
+  background-color: white;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+.row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.headerRow {
+  margin-top: 30px;
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  font-weight: bold;
+  background: lightgrey;
+  height: 30px;
+}
+
+.cellHeader {
+  display: flex;
+  border: 1px solid #000; /* Add border for each cell */
+  width: 100%; /* Set width of each cell to approximately 1/7th of the table */
+  height: 30px; /* Set height of each cell */
+  align-items: center;
+  justify-content: center;
+}
+
+.cellHeaderSpan3 {
+  display: flex;
+  border: 1px solid #000; /* Add border for each cell */
+  width: 100%; /* Set width of each cell to approximately 1/7th of the table */
+  height: 30px; /* Set height of each cell */
+  align-items: center;
+  justify-content: center;
+  grid-column: span 3 / span 3;
+}
+
+.cell {
+  display: table-cell;
+  border: 1px solid #000; /* Add border for each cell */
+  width: 100%; /* Set width of each cell to approximately 1/7th of the table */
+  height: 125px; /* Set height of each cell */
+}
+
+.downloadImage .react-flow {
+  background: #1a365d;
+}
+
+.downloadImage .react-flow__node {
+  width: 50px;
+  height: 50px;
+  color: white;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-color: white;
+}
+
+.downloadImage .react-flow__node-custom {
+  font-size: 12px;
+  background: #eee;
+  border: 1px solid #555;
+  border-radius: 5px;
+  text-align: center;
+  padding: 10px;
+}
+
+.downloadImage .react-flow__node-custom .react-flow__handle-right {
+  transform: none;
+}
+
+.downloadImage .download-btn {
+  border: 1px solid #eee;
+  background: #ebf8ff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.downloadImage .download-btn:hover {
+  opacity: 0.9;
+}

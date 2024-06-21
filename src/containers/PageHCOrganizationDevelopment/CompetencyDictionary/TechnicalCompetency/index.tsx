@@ -1,0 +1,254 @@
+/* eslint-disable no-use-before-define */
+import React, { useEffect, useState } from 'react'
+import { Card, Col, Row, Steps } from 'antd'
+import { Spacer, Button } from 'pink-lava-ui'
+import { useRouter } from 'next/router'
+import styled from 'styled-components'
+import { If, Then } from 'react-if'
+import { ICArrowLeft, ICAngleSmallLeft, ICAngleSmallRightWhite } from 'src/assets'
+import { createCompetency } from 'src/api/competency-dictionary/technical-competency'
+import { ConfirmSubmit, ConfirmSuccessSubmit } from '../alerts'
+import Step1 from './components/step-1'
+import Step2 from './components/step-2'
+import Step3 from './components/step-3'
+
+const { Step } = Steps
+
+export default function TechnicalCompetency() {
+  const router = useRouter()
+  const [step, setStep] = useState<number>(0)
+  const [disableButton, setDisableButton] = useState<boolean>(true)
+  const [allDataForm, setAllDataForm] = useState<any>({
+    payload: {
+      definition: '',
+      name: '',
+      country_code: undefined,
+      legal_entity_code: undefined,
+      job_family_code: undefined,
+      sub_job_family_code: undefined,
+      job_title_id: undefined,
+      type: 'technical',
+      competency_detail: [],
+      proficiency_level: 1,
+    },
+    step: 0,
+  })
+  const [isSubmit, setIsSubmit] = useState<boolean>(false)
+  const [isSuccessSubmit, setIsSuccessSubmit] = useState<boolean>(false)
+
+  const handleStep = () => {
+    switch (step) {
+      case 0:
+        return <Step1 onChangeDisableButton={setDisableButton} />
+      case 1:
+        return (
+          <Step2
+            onChangeDisableButton={setDisableButton}
+            setAllDataForm={(data) => {
+              setAllDataForm({ ...allDataForm, payload: data })
+            }}
+            allDataForm={allDataForm}
+          />
+        )
+      case 2:
+        return (
+          <Step3
+            onChangeDisableButton={setDisableButton}
+            setAllDataForm={(data) => {
+              setAllDataForm({
+                ...allDataForm,
+                payload: { ...allDataForm?.payload, competency_detail: data },
+              })
+            }}
+            allDataForm={allDataForm}
+          />
+        )
+      default:
+        return <Step1 onChangeDisableButton={setDisableButton} />
+    }
+  }
+
+  useEffect(() => {
+    const prevData = JSON.parse(localStorage.getItem('technical_competency')) ?? 0
+    setStep(prevData?.step ?? 0)
+    setAllDataForm(prevData)
+  }, [])
+
+  const handleUpdateStorage = (steps: number) => {
+    const prevData = JSON.parse(localStorage.getItem('technical_competency'))
+    localStorage.setItem(
+      'technical_competency',
+      JSON.stringify({
+        ...prevData,
+        payload: { ...prevData?.payload, ...allDataForm?.payload },
+        step: steps,
+      }),
+    )
+  }
+
+  const handleSubmitForm = async () => {
+    const { payload } = allDataForm
+
+    const competency_detail = payload?.competency_detail.map((item: any, index: number) => ({
+      level: index + 1,
+      data: item.level,
+    }))
+
+    try {
+      const res = await createCompetency({ ...payload, competency_detail })
+      if (res?.status === 200 || res?.status === 201) {
+        setIsSuccessSubmit(true)
+      } else {
+        setIsSuccessSubmit(false)
+      }
+    } catch (e) {
+      setIsSuccessSubmit(false)
+    }
+  }
+
+  return (
+    <CompetencyAnalysisPage>
+      <Spacer size={20} />
+      <Card style={{ borderRadius: 8, flex: 1 }}>
+        <Row align="middle" justify="space-between">
+          <Col xs={2} xl={2}>
+            <ICArrowLeft
+              onClick={() => router.push('/organization-development/competency-dictionary')}
+              style={{ cursor: 'pointer' }}
+            />
+          </Col>
+          <Col xs={22} xl={22}>
+            <Steps className="hc-step" current={step}>
+              <Step title="Technical Competency" />
+              <Step title="Technical Competency Design" />
+              <Step title="Key Technical & Activity" />
+            </Steps>
+          </Col>
+        </Row>
+      </Card>
+
+      <Spacer size={20} />
+      {handleStep()}
+
+      <Spacer size={20} />
+      <Card style={{ borderRadius: 8, flex: 1 }}>
+        <Row gutter={[20, 20]} justify="end">
+          <If condition={step > 0}>
+            <Then>
+              <Button
+                size="big"
+                variant="tertiary"
+                className="hc-button-tertiary "
+                onClick={() => {
+                  setStep(step - 1)
+                  handleUpdateStorage(step - 1)
+                }}
+              >
+                <ICAngleSmallLeft /> Previous
+              </Button>
+            </Then>
+          </If>
+
+          <Button
+            size="big"
+            variant="tertiary"
+            className="hc-button"
+            disabled={disableButton}
+            onClick={() => {
+              let steps = step
+              if (step < 2) {
+                setStep(step + 1)
+                steps = step + 1
+              } else {
+                setIsSubmit(true)
+              }
+              handleUpdateStorage(steps)
+            }}
+          >
+            {step < 2 ? 'Next' : 'Submit'} <ICAngleSmallRightWhite />
+          </Button>
+        </Row>
+      </Card>
+
+      <ConfirmSubmit
+        open={isSubmit}
+        closable={false}
+        maskClosable={false}
+        title="Are you sure to submit the Technical Competency Analysis?"
+        subTitle="Please check your data before submit. "
+        onClose={() => setIsSubmit(false)}
+        onSubmit={() => {
+          setIsSubmit(false)
+          handleSubmitForm()
+        }}
+      />
+
+      <ConfirmSuccessSubmit
+        open={isSuccessSubmit}
+        closable={false}
+        maskClosable={false}
+        title="Your technical competency analysis has been succesfully submitted."
+        onClose={(val: boolean) => {
+          setIsSuccessSubmit(val)
+          // localStorage.removeItem('technical_competency')
+          router.push('/organization-development/competency-dictionary/dictionary')
+        }}
+      />
+    </CompetencyAnalysisPage>
+  )
+}
+
+const CompetencyAnalysisPage = styled.div`
+.hc-button { background-color: #2771C7; border: 1px solid #2771C7; color: white; }
+.hc-button: hover { background-color: #164b89; border: 1px solid #164b89; }
+.hc-button: disabled { background-color: #DDDDDD; border: 1px solid #DDDDDD; }
+.hc-button-tertiary { background-color: #FFFFFF; border: 2px solid #2771C7; color: #2771C7; margin-right: 20px; }
+.hc-button-tertiary: hover { border: 2px solid #114480; color: #114480; }
+.hc-button-tertiary: disabled { background-color: #DDDDDD; border: 2px solid #DDDDDD; }
+
+.hc-step { width: 98%; }
+.ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-content > .ant-steps-item-title,
+.ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-content > .ant-steps-item-title,
+.ant-steps-horizontal:not(.ant-steps-label-vertical) .ant-steps-item:last-child .ant-steps-item-title,
+.ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-content > .ant-steps-item-title {
+  font-size: 14px;
+  color: #2771C7;
+  font-weight: 600;
+}
+.ant-steps-item-finish .ant-steps-item-icon,
+.ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-icon {
+  width: 14px;
+  height: 14px;
+  margin-top: 8px;
+  background-color: #2771C7;
+  border-color: #2771C7;
+}
+.ant-steps-item-icon .ant-steps-icon { top: -12.5px; }
+.ant-steps-item-title::after { top: 14px; }
+.hc-step .anticon svg {
+  width: 10px;
+  height: 10px;
+  color: #ffff;
+  margin-top: 14px;
+}
+.ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon,
+.ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-icon .ant-steps-icon,
+.ant-steps-item-wait .ant-steps-item-icon > .ant-steps-icon {
+  font-size: 0px;
+}
+.ant-steps-item-wait .ant-steps-item-icon {
+  border-color: #9DB5D9;
+  width: 14px;
+  height: 14px;
+  margin-top: 8px;
+}
+.ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-content > .ant-steps-item-title::after {
+  background-color: #2771C7;
+  height: 4px;
+}
+.ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-content > .ant-steps-item-title::after,
+.ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-content > .ant-steps-item-title::after {
+  background-color: #D4E4FC;
+  height: 4px;
+}
+` as any

@@ -1,0 +1,45 @@
+#build
+#docker build -t ex-eds-web -f DockerfileNew .
+
+#run
+#docker run -itd --name ex-eds-web -p4007:3000 ex-eds-web
+
+
+# Stage 1: install dependencies
+FROM node:18.16.1-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+COPY vendor ./vendor
+RUN apk update
+RUN apk add git
+COPY . .
+RUN yarn install --network-timeout 1000000 --network-concurrency 1
+RUN yarn build
+
+# Stage 2: runner
+
+# mode expimental 
+# harus ada di file nexe.config.js
+#  experimental: {
+#    outputStandalone: true,
+#  }, 
+
+FROM node:18.16.1-alpine
+WORKDIR /app
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json .
+COPY --from=builder /app/yarn.lock .
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/.env ./
+
+ENV NODE_ENV production
+ENV NEXT_PUBLIC_API_BASE_URL_1 https://gateway.epc-dev.nabatisnack.co.id:8181/eds-sales/
+ENV NEXT_PUBLIC_API_BASE_URL_2 https://gateway.epc-dev.nabatisnack.co.id:8181/eds-logistic/
+ENV NEXT_PUBLIC_API_BASE_URL_3 https://gateway.epc-dev.nabatisnack.co.id:8181/eds-sales/
+
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]

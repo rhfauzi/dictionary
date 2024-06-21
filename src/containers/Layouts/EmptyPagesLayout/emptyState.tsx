@@ -1,0 +1,36 @@
+/* eslint-disable @next/next/no-img-element */
+import { Row, Typography } from 'antd'
+
+const { Title, Text } = Typography;
+
+interface EmptyStateProps {
+  title: string,
+  subtitle: string,
+}
+export const EmptyState: React.FC<EmptyStateProps> = (props: EmptyStateProps) => (
+  <Row
+    gutter={[8, 8]}
+    justify="center"
+    style={{
+      flexDirection: 'column',
+      display: 'flex',
+      alignContent: 'center',
+      alignItems: 'center',
+    }}
+  >
+    <img
+      alt={''}
+      style={{
+        width: '200px',
+        height: 'auto',
+      }}
+      src={'/hc/images/hc-empty-state.png'}
+    />
+    <Title level={5} style={{ margin: 0 }}>
+      {props.title}
+    </Title>
+    <Text type="secondary">
+      {props.subtitle}
+    </Text>
+  </Row>
+)

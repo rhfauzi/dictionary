@@ -1,0 +1,92 @@
+pipeline{
+    environment {
+        servicename     = 'hc-web'
+        url             = 'https://harbor-img.nabatisnack.co.id'
+        urlnonprotocol  = 'harbor-img.nabatisnack.co.id'
+        credentialId    = 'harbor-img'
+        projectdocker   = 'hc'
+        envpath         = '/home/epcadmin/.deploy/.config/hc-web/'
+        dockerapppath   = '/app/'
+        dockernetwork   = 'epc'
+        sshid           = 'cicd'
+    }
+
+    agent any
+
+    stages {
+        stage('Set Environment') {
+            steps {
+                echo 'Setup environment'
+                script {
+                    switch (env.BRANCH_NAME) {
+                        case 'develop':
+                            env.flavor        = 'development'
+                            env.serviceflavor = 'dev'
+                            env.servertarget  = env.EPC_DEV_SERVER
+                            env.apptag           = "latest"
+                            break
+                        case 'qa':
+                            env.serviceflavor = 'qa'
+                            env.flavor        = 'qa'
+                            env.servertarget  = env.EPC_QA_SERVER
+                            env.apptag        = env.BUILD_NUMBER
+                            break
+                        case 'master':
+                            env.flavor       = 'production'
+                            env.servertarget = env.EPC_PRD_SERVER
+                            env.apptag       = env.BUILD_NUMBER
+                            break
+                        }     
+                }           
+            }
+        }
+
+        stage('Build Image') {
+            when { 
+                expression { 
+                    return env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'qa' 
+                }
+            }
+                        
+            steps {
+                echo 'Build Image '+env.flavor
+                sh 'docker build --no-cache -t ${servicename}:${BRANCH_NAME}-${apptag} -f DockerfileNew .'
+            }
+        }
+
+        stage('Docker Login tag and push') {
+            when { 
+                expression { 
+                    return env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'qa' 
+                }
+            }
+            steps {
+                script {
+                    echo 'Push docker image to docker registry Harbor '+env.flavor
+                    docker.withRegistry(url, credentialId) {
+                        echo 'ini ${flavor} '+flavor
+                        sh 'docker tag ${servicename}:${BRANCH_NAME}-${apptag} ${urlnonprotocol}/${projectdocker}/${servicename}:${BRANCH_NAME}-${apptag}'
+                        sh 'docker push ${urlnonprotocol}/${projectdocker}/${servicename}:${BRANCH_NAME}-${apptag}'
+                    }
+                }
+            }
+        }        
+
+		stage('Set Image VM') {
+            when { 
+                expression { 
+                    return env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'qa' 
+                }
+            }
+            steps {
+                sh 'echo ssh connecting...'
+                script {
+                    sshagent (credentials: [sshid]) {
+					sh 'ssh -t -o StrictHostKeyChecking=no -l cicd ${servertarget} -p 22 "pwd; sudo docker rm ${servicename}-${serviceflavor} -f;sudo docker pull ${urlnonprotocol}/${projectdocker}/${servicename}:${BRANCH_NAME}-${apptag}; sudo docker run -d --name ${servicename}-${serviceflavor} --network=${dockernetwork} -v ${envpath}${flavor}/.env:${dockerapppath}.config -p3000:3000/tcp ${urlnonprotocol}/${projectdocker}/${servicename}:${BRANCH_NAME}-${apptag}"'
+				    }
+                }
+            }
+        }
+      
+    }        
+}

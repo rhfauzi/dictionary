@@ -1,0 +1,5 @@
+{
+  "NEXT_PUBLIC_API_BASE_URL_1": "https://gateway.epc-dev.nabatisnack.co.id:8181/eds-sales/asdasdads",
+  "NEXT_PUBLIC_API_BASE_URL_2": "https://nabati.epc-dev.nabatisnack.co.id:8181/eds-logistic/",
+  "NEXT_PUBLIC_API_BASE_URL_3": "https://gateway.epc-dev.nabatisnack.co.id:8181/eds-sales/"
+}
